@@ -1,5 +1,5 @@
-import 'package:erp_mini/core/constants/app_colors.dart';
-import 'package:erp_mini/core/constants/app_text_style.dart';
+import 'package:coworking_erp/core/constants/app_colors.dart';
+import 'package:coworking_erp/core/constants/app_text_style.dart';
 import 'package:flutter/material.dart';
 
 // كلاس يحتوي على الثيم الكامل للتطبيق

@@ -1,4 +1,4 @@
-import 'package:erp_mini/core/constants/app_colors.dart';
+import 'package:coworking_erp/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 
 // كلاس يحتوي على كل أنماط النصوص المستخدمة في التطبيق

@@ -1,9 +1,9 @@
+import 'package:coworking_erp/core/constants/app_colors.dart';
+import 'package:coworking_erp/core/constants/app_text_style.dart';
+import 'package:coworking_erp/core/routing/app_router.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:coworking_erp/core/theme/app_colors.dart';
-import 'package:coworking_erp/core/theme/app_text_styles.dart';
-import 'package:coworking_erp/core/routes/app_router.dart';
 
 // ==============================================================================
 // ويدجت الهيكل العام للتطبيق (AppShell)
@@ -90,9 +90,7 @@ class _AppShellState extends State<AppShell> {
           ),
 
           // 3. مساحة عرض الصفحة المختارة
-          Expanded(
-            child: widget.child,
-          ),
+          Expanded(child: widget.child),
         ],
       ),
     );
@@ -187,10 +185,7 @@ class _NavButtonState extends State<_NavButton> {
                 decoration: BoxDecoration(
                   color: backgroundColor,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: borderColor,
-                    width: 1.2,
-                  ),
+                  border: Border.all(color: borderColor, width: 1.2),
                 ),
                 child: Row(
                   children: [
@@ -209,7 +204,9 @@ class _NavButtonState extends State<_NavButton> {
                           color: isHighlighted
                               ? AppColors.navRailActiveText
                               : const Color(0xFFD1D5DB),
-                          fontWeight: isHighlighted ? FontWeight.w600 : FontWeight.w400,
+                          fontWeight: isHighlighted
+                              ? FontWeight.w600
+                              : FontWeight.w400,
                           fontSize: 13,
                         ),
                       ),
