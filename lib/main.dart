@@ -2,9 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:erp_mini/core/routing/app_router.dart';
 import 'package:erp_mini/core/constants/app_colors.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await Supabase.initialize(
+    url: 'https://bjudgttzzlcmsqxrojpl.supabase.co',
+    publishableKey:
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJqdWRndHR6emxjbXNxeHJvanBsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI4MzU3ODQsImV4cCI6MjEwODQxMTc4NH0.gOdONl_rqVEMj36Fqzep83qLNWTUYFTC5nMnKkMeKR8',
+  );
+
   runApp(const ErpApp());
 }
 

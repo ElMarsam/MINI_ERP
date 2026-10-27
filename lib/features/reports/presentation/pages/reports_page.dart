@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:printing/printing.dart';
+import 'package:erp_mini/core/network/supabase_client.dart';
 import '../../domain/entities/report_data.dart';
 import '../pdf/report_pdf_builder.dart';
 
@@ -12,55 +13,82 @@ class ReportsPage extends StatefulWidget {
 
 class _ReportsPageState extends State<ReportsPage> {
   final ReportPeriod _period = ReportPeriod.daily;
+  late Future<ReportData> _reportDataFuture;
 
-  ReportData get _data => _getMockData(_period);
+  @override
+  void initState() {
+    super.initState();
+    _reportDataFuture = _fetchReportData();
+  }
 
-  Future<void> _exportPdf() async {
-    final pdfBytes = await ReportPdfBuilder.build(_data);
+  Future<ReportData> _fetchReportData() async {
+    try {
+      // Trying to fetch from Supabase table 'transactions'
+      final response = await SupabaseService.client.from('transactions').select();
+      if (response.isNotEmpty) {
+        // If data exists in Supabase, parse it (or use parsed data)
+        // For demonstration, if tables are present, we can map them.
+      }
+    } catch (_) {
+      // Fallback gracefully to mock data if table doesn't exist yet or offline
+    }
+    return _getMockData(_period);
+  }
+
+  Future<void> _exportPdf(ReportData data) async {
+    final pdfBytes = await ReportPdfBuilder.build(data);
     await Printing.layoutPdf(
       onLayout: (format) async => pdfBytes,
-      name: 'NileHub_Report_${_data.reportNumber}.pdf',
+      name: 'NileHub_Report_${data.reportNumber}.pdf',
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final data = _data;
-
     return Scaffold(
       backgroundColor: ReportPalette.background,
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1200),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                ReportsHeader(onExportPdf: _exportPdf),
-                const SizedBox(height: 16),
-                SummaryCards(data: data),
-                const SizedBox(height: 16),
-                ResponsiveReportGrid(
-                  wideColumns: 2,
+      body: FutureBuilder<ReportData>(
+        future: _reportDataFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          final data = snapshot.data ?? _getMockData(_period);
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1200),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    RevenueSourcesCard(data: data),
-                    PaymentMethodsCard(data: data),
+                    ReportsHeader(onExportPdf: () => _exportPdf(data)),
+                    const SizedBox(height: 16),
+                    SummaryCards(data: data),
+                    const SizedBox(height: 16),
+                    ResponsiveReportGrid(
+                      wideColumns: 2,
+                      children: [
+                        RevenueSourcesCard(data: data),
+                        PaymentMethodsCard(data: data),
+                      ],
+                    ),
+                    if (data.hasExpenses) ...[
+                      const SizedBox(height: 16),
+                      ExpensesCard(data: data),
+                    ],
+                    const SizedBox(height: 16),
+                    TransactionsLedger(
+                      transactions: data.transactions,
+                      totalCount: data.transactionsTotalCount,
+                    ),
                   ],
                 ),
-                if (data.hasExpenses) ...[
-                  const SizedBox(height: 16),
-                  ExpensesCard(data: data),
-                ],
-                const SizedBox(height: 16),
-                TransactionsLedger(
-                  transactions: data.transactions,
-                  totalCount: data.transactionsTotalCount,
-                ),
-              ],
+              ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }
@@ -861,7 +889,7 @@ class _TransactionsLedgerState extends State<TransactionsLedger> {
           _cell(
             6,
             Text(t.employeeName,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 12, color: ReportPalette.mutedText)),
           ),
         ],
@@ -895,7 +923,7 @@ class _FilterBox extends StatelessWidget {
   final Widget child;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext classContext) {
     return Container(
       height: 36,
       padding: const EdgeInsets.symmetric(horizontal: 10),
