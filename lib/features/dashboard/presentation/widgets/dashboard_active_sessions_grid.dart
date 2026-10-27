@@ -1,6 +1,10 @@
-import 'package:erp_mini/core/constants/app_colors.dart';
-import 'package:erp_mini/core/constants/app_text_style.dart';
+import 'package:coworking_erp/core/constants/app_colors.dart';
+import 'package:coworking_erp/core/constants/app_text_style.dart';
+import 'package:coworking_erp/features/sessions/domain/entities/session.dart';
+import 'package:coworking_erp/features/widgets/common/active_session_card.dart';
+
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 // ==============================================================================
 // ويدجت شبكة الجلسات النشطة في الداشبورد (DashboardActiveSessionsGrid)
