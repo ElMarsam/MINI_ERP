@@ -13,13 +13,7 @@ class ReportsPage extends StatefulWidget {
 
 class _ReportsPageState extends State<ReportsPage> {
   final ReportPeriod _period = ReportPeriod.daily;
-  late Future<ReportData> _reportDataFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    _reportDataFuture = _fetchReportData();
-  }
+  late final Future<ReportData> _reportDataFuture = _fetchReportData();
 
   Future<ReportData> _fetchReportData() async {
     try {
@@ -27,7 +21,6 @@ class _ReportsPageState extends State<ReportsPage> {
       final response = await SupabaseService.client.from('transactions').select();
       if (response.isNotEmpty) {
         // If data exists in Supabase, parse it (or use parsed data)
-        // For demonstration, if tables are present, we can map them.
       }
     } catch (_) {
       // Fallback gracefully to mock data if table doesn't exist yet or offline
@@ -923,7 +916,7 @@ class _FilterBox extends StatelessWidget {
   final Widget child;
 
   @override
-  Widget build(BuildContext classContext) {
+  Widget build(BuildContext context) {
     return Container(
       height: 36,
       padding: const EdgeInsets.symmetric(horizontal: 10),
