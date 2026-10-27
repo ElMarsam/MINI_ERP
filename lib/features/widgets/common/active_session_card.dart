@@ -352,9 +352,43 @@ class _ActiveSessionCardState extends State<ActiveSessionCard> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // عداد الوقت المستغرق
+                      // الحساب المالي التراكمي اللحظي (في اليمين)
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(
+                                LucideIcons.coins,
+                                size: 13,
+                                color: AppColors.secondary,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'الحساب الحالي',
+                                style: AppTextStyles.labelSm.copyWith(
+                                  color: AppColors.secondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            '${currentCost.toStringAsFixed(1)} ج.م',
+                            style: AppTextStyles.headlineLg.copyWith(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.secondary,
+                              fontFeatures: const [
+                                FontFeature.tabularFigures(),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      // عداد الوقت المستغرق (في اليسار)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Row(
                             children: [
@@ -396,40 +430,6 @@ class _ActiveSessionCardState extends State<ActiveSessionCard> {
                           ),
                         ],
                       ),
-                      // الحساب المالي التراكمي اللحظي
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Row(
-                            children: [
-                              const Icon(
-                                LucideIcons.coins,
-                                size: 13,
-                                color: AppColors.secondary,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                'الحساب الحالي',
-                                style: AppTextStyles.labelSm.copyWith(
-                                  color: AppColors.secondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            '${currentCost.toStringAsFixed(1)} ج.م',
-                            style: AppTextStyles.headlineLg.copyWith(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.secondary,
-                              fontFeatures: const [
-                                FontFeature.tabularFigures(),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
                     ],
                   ),
                 ),
@@ -442,7 +442,38 @@ class _ActiveSessionCardState extends State<ActiveSessionCard> {
                 padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
                 child: Row(
                   children: [
-                    // زر الإيقاف المؤقت أو الاستئناف
+                    // زر إنهاء الجلسة وتسوية الفاتورة (في اليمين)
+                    Expanded(
+                      flex: 3,
+                      child: ElevatedButton.icon(
+                        onPressed: _isToggling ? null : widget.onEnd,
+                        icon: const Icon(
+                          LucideIcons.receiptText,
+                          size: 15,
+                          color: Colors.white,
+                        ),
+                        label: Text(
+                          'إنهاء وحساب الفاتورة',
+                          style: AppTextStyles.labelLg.copyWith(
+                            fontSize: 12,
+                            color: Colors.white,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _isToggling
+                              ? AppColors.primary.withValues(alpha: 0.5)
+                              : AppColors.primary,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    // زر الإيقاف المؤقت أو الاستئناف (في اليسار)
                     Expanded(
                       flex: 2,
                       child: OutlinedButton.icon(
@@ -495,37 +526,6 @@ class _ActiveSessionCardState extends State<ActiveSessionCard> {
                                 : AppColors.tertiary.withValues(alpha: 0.7),
                             width: _isToggling ? 1.5 : 1.0,
                           ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    // زر إنهاء الجلسة وتسوية الفاتورة
-                    Expanded(
-                      flex: 3,
-                      child: ElevatedButton.icon(
-                        onPressed: _isToggling ? null : widget.onEnd,
-                        icon: const Icon(
-                          LucideIcons.receiptText,
-                          size: 15,
-                          color: Colors.white,
-                        ),
-                        label: Text(
-                          'إنهاء وحساب الفاتورة',
-                          style: AppTextStyles.labelLg.copyWith(
-                            fontSize: 12,
-                            color: Colors.white,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _isToggling
-                              ? AppColors.primary.withValues(alpha: 0.5)
-                              : AppColors.primary,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(vertical: 10),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(6),
                           ),

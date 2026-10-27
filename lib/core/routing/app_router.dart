@@ -1,4 +1,6 @@
+import 'package:flutter/material.dart';
 import 'package:coworking_erp/features/dashboard/presentation/pages/dashboard_page.dart';
+import 'package:coworking_erp/features/sessions/presentation/pages/sessions_page.dart';
 import 'package:coworking_erp/features/widgets/layout/app_sidebar.dart';
 import 'package:go_router/go_router.dart';
 
@@ -49,3 +51,28 @@ final GoRouter appRouter = GoRouter(
     ),
   ],
 );
+
+// صفحات فرعية مؤقتة ريثما يتم اكتمال شاشاتها
+class CafePage extends StatelessWidget {
+  const CafePage({super.key});
+  @override
+  Widget build(BuildContext context) => const Scaffold(body: Center(child: Text('صفحة الكافيه قيد التطوير')));
+}
+
+class BirthdaysPage extends StatelessWidget {
+  const BirthdaysPage({super.key});
+  @override
+  Widget build(BuildContext context) => const Scaffold(body: Center(child: Text('صفحة أعياد الميلاد قيد التطوير')));
+}
+
+class ReportsPage extends StatelessWidget {
+  const ReportsPage({super.key});
+  @override
+  Widget build(BuildContext context) => const Scaffold(body: Center(child: Text('صفحة التقارير قيد التطوير')));
+}
+
+class SettingsPage extends StatelessWidget {
+  const SettingsPage({super.key});
+  @override
+  Widget build(BuildContext context) => const Scaffold(body: Center(child: Text('صفحة الإعدادات قيد التطوير')));
+}

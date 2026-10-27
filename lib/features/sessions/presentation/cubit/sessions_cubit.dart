@@ -2,12 +2,11 @@ import 'dart:async';
 import 'dart:collection';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:coworking_erp/domain/entities/session.dart';
-import 'package:coworking_erp/domain/repositories/session_repository.dart';
-import 'package:coworking_erp/domain/repositories/customer_repository.dart';
-import 'package:coworking_erp/data/datasources/remote/supabase_remote_data_source.dart';
 import 'package:coworking_erp/core/di/injection_container.dart';
 import 'package:coworking_erp/core/utils/logger.dart';
+import 'package:coworking_erp/features/dashboard/data/datasources/supabase_remote_data_source.dart';
+import 'package:coworking_erp/features/sessions/domain/entities/session.dart';
+import 'package:coworking_erp/features/sessions/domain/repositories/session_repository.dart';
 
 part 'sessions_state.dart';
 
@@ -15,11 +14,10 @@ part 'sessions_state.dart';
 // كلاس مدير جلسات العمل (SessionsCubit)
 // يطبق مبادئ الـ OOP وهياكل البيانات المتقدمة:
 // - LinkedHashMap لتسريع العمليات بزمن O(1) مع الحفاظ على ترتيب العناصر
-// - Dependency Inversion بالاعتماد على SessionRepository و CustomerRepository
+// - Dependency Inversion بالاعتماد على SessionRepository
 // ==============================================================================
 class SessionsCubit extends Cubit<SessionsState> {
   final SessionRepository _sessionRepository;
-  final CustomerRepository _customerRepository;
   Timer? _tickTimer;
 
   // هيكل بيانات LinkedHashMap لحفظ الجلسات بزمن وصول O(1) مع الحفاظ على الترتيب
@@ -30,10 +28,8 @@ class SessionsCubit extends Cubit<SessionsState> {
 
   SessionsCubit({
     SessionRepository? sessionRepository,
-    CustomerRepository? customerRepository,
     SupabaseRemoteDataSource? dataSource,
   }) : _sessionRepository = sessionRepository ?? sl<SessionRepository>(),
-       _customerRepository = customerRepository ?? sl<CustomerRepository>(),
        super(const SessionsInitial());
 
   // تحميل قائمة الجلسات
@@ -186,7 +182,6 @@ class SessionsCubit extends Cubit<SessionsState> {
 
   // Getters للوصول للمستودعات ومصدر البيانات
   SessionRepository get sessionRepository => _sessionRepository;
-  CustomerRepository get customerRepository => _customerRepository;
   SupabaseRemoteDataSource get dataSource => sl<SupabaseRemoteDataSource>();
 
   @override

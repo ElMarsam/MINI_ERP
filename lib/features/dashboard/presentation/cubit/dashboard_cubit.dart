@@ -1,10 +1,13 @@
 import 'dart:async';
 import 'package:equatable/equatable.dart';
-import 'package:erp_mini/features/dashboard/data/datasources/supabase_remote_data_source.dart';
-
-import 'package:erp_mini/features/dashboard/domain/entities/dashboard_stats.dart';
-import 'package:erp_mini/features/dashboard/domain/repositories/dashboard_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:coworking_erp/core/di/injection_container.dart';
+import 'package:coworking_erp/features/sessions/domain/entities/session.dart';
+import 'package:coworking_erp/features/dashboard/data/datasources/supabase_remote_data_source.dart';
+import 'package:coworking_erp/features/dashboard/data/models/cash_withdrawal_model.dart';
+import 'package:coworking_erp/features/dashboard/domain/entities/birthday_booking.dart';
+import 'package:coworking_erp/features/dashboard/domain/entities/dashboard_stats.dart';
+import 'package:coworking_erp/features/dashboard/domain/repositories/dashboard_repository.dart';
 
 part 'dashboard_state.dart';
 

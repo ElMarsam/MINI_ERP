@@ -1,12 +1,18 @@
-import 'package:erp_mini/core/constants/app_colors.dart';
-import 'package:erp_mini/core/constants/app_text_style.dart';
-import 'package:erp_mini/features/dashboard/presentation/cubit/dashboard_cubit.dart';
-import 'package:erp_mini/features/dashboard/presentation/widgets/dashboard_active_sessions_grid.dart';
-import 'package:erp_mini/features/dashboard/presentation/widgets/dashboard_birthdays_sidebar.dart';
-import 'package:erp_mini/features/dashboard/presentation/widgets/dashboard_header.dart';
-import 'package:erp_mini/features/dashboard/presentation/widgets/dashboard_withdrawals_sidebar.dart';
+import 'package:coworking_erp/core/constants/app_colors.dart';
+import 'package:coworking_erp/core/constants/app_text_style.dart';
+import 'package:coworking_erp/features/dashboard/presentation/cubit/dashboard_cubit.dart';
+import 'package:coworking_erp/features/dashboard/presentation/widgets/dashboard_active_sessions_grid.dart';
+import 'package:coworking_erp/features/dashboard/presentation/widgets/dashboard_birthdays_sidebar.dart';
+import 'package:coworking_erp/features/dashboard/presentation/widgets/dashboard_header.dart';
+import 'package:coworking_erp/features/dashboard/presentation/widgets/dashboard_withdrawals_sidebar.dart';
+import 'package:coworking_erp/features/sessions/domain/entities/session.dart';
+import 'package:coworking_erp/features/sessions/presentation/cubit/sessions_cubit.dart';
+import 'package:coworking_erp/features/widgets/common/cash_withdrawal_dialog.dart';
+import 'package:coworking_erp/features/widgets/common/end_session_dialog.dart';
+import 'package:coworking_erp/features/widgets/common/start_session_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 // ==============================================================================
 // صفحة لوحة التحكم الرئيسية (DashboardPage)

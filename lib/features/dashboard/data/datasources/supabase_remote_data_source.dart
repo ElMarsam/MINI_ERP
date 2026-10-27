@@ -1,10 +1,10 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../core/utils/logger.dart';
-import '../../models/customer_model.dart';
-import '../../models/session_model.dart';
-import '../../models/birthday_booking_model.dart';
-import '../../models/cash_withdrawal_model.dart';
-import '../../../domain/entities/cafe.dart';
+import 'package:coworking_erp/core/utils/logger.dart';
+import 'package:coworking_erp/features/dashboard/data/models/customer_model.dart';
+import 'package:coworking_erp/features/sessions/data/models/session_model.dart';
+import 'package:coworking_erp/features/dashboard/domain/entities/birthday_booking.dart';
+import 'package:coworking_erp/features/dashboard/data/models/cash_withdrawal_model.dart';
+import 'package:coworking_erp/features/dashboard/domain/entities/cafe.dart';
 
 // ==============================================================================
 // مصدر البيانات البعيد عبر سوبابيز (SupabaseRemoteDataSource)
@@ -30,7 +30,7 @@ class SupabaseRemoteDataSource {
       query = query.ilike('name', '%$search%');
     }
     // تنفيذ الاستعلام وترتيب النتائج تصاعدياً بالاسم
-    final data = await query.order('name');
+    final data = await query.order('full_name');
     return (data as List).map((e) => CustomerModel.fromJson(e)).toList();
   }
 
@@ -74,14 +74,14 @@ class SupabaseRemoteDataSource {
     // نحدد كل الجلسات التي حالتها ليست closed، ونعمل join مع جدول customers لجلب اسم العميل
     final data = await _client
         .from('sessions')
-        .select('*, customers(name)')
-        .neq('status', 'closed')
-        .order('start_time');
+        .select('*, customers(full_name)')
+        .neq('status', 'completed')
+        .order('check_in_at');
     return (data as List).map((e) {
       final map = Map<String, dynamic>.from(e);
       // تسطيح اسم العميل ليصبح حقلاً مباشراً customer_name
       if (map['customers'] != null) {
-        map['customer_name'] = map['customers']['name'];
+        map['customer_name'] = map['customers']['full_name'];
       }
       return SessionModel.fromJson(map);
     }).toList();
@@ -93,13 +93,13 @@ class SupabaseRemoteDataSource {
     final startOfDay = DateTime(today.year, today.month, today.day);
     final data = await _client
         .from('sessions')
-        .select('*, customers(name)')
-        .gte('start_time', startOfDay.toIso8601String())
-        .order('start_time', ascending: false);
+        .select('*, customers(full_name)')
+        .gte('check_in_at', startOfDay.toIso8601String())
+        .order('check_in_at', ascending: false);
     return (data as List).map((e) {
       final map = Map<String, dynamic>.from(e);
       if (map['customers'] != null) {
-        map['customer_name'] = map['customers']['name'];
+        map['customer_name'] = map['customers']['full_name'];
       }
       return SessionModel.fromJson(map);
     }).toList();
@@ -110,11 +110,11 @@ class SupabaseRemoteDataSource {
     final data = await _client
         .from('sessions')
         .insert(json)
-        .select('*, customers(name)')
+        .select('*, customers(full_name)')
         .single();
     final map = Map<String, dynamic>.from(data);
     if (map['customers'] != null) {
-      map['customer_name'] = map['customers']['name'];
+      map['customer_name'] = map['customers']['full_name'];
     }
     return SessionModel.fromJson(map);
   }
@@ -133,50 +133,12 @@ class SupabaseRemoteDataSource {
       'updated_at': nowUtc.toIso8601String(),
     };
 
-    if (isPausing) {
-      // عند الإيقاف: نسجل لحظة الإيقاف الحالية في حقل pause_time بصيغة UTC
-      updatePayload['pause_time'] = nowUtc.toIso8601String();
-    } else if (status == 'active') {
-      // عند الاستئناف: نحسب كم ثانية مرت أثناء الإيقاف ونضيفها لإجمالي التوقف
-      DateTime? effectivePauseTime = currentPauseTime;
-      int existingPausedSecs =
-          (currentPausedDuration != null && !currentPausedDuration.isNegative)
-          ? currentPausedDuration.inSeconds
-          : 0;
-
-      // لو لم يتم تمرير وقت الإيقاف المؤقت من الذاكرة نجلبها فوراً من قاعدة البيانات
-      if (effectivePauseTime == null) {
-        final currentData = await _client
-            .from('sessions')
-            .select('pause_time, total_paused_seconds')
-            .eq('id', id)
-            .maybeSingle();
-        if (currentData != null) {
-          if (currentData['pause_time'] != null) {
-            effectivePauseTime = DateTime.tryParse(
-              currentData['pause_time'] as String,
-            );
-          }
-          final dbPausedSecs =
-              (currentData['total_paused_seconds'] as num?)?.toInt() ?? 0;
-          if (dbPausedSecs > existingPausedSecs) {
-            existingPausedSecs = dbPausedSecs;
-          }
-        }
+    Duration newPausedDuration = currentPausedDuration ?? Duration.zero;
+    if (status == 'active' && currentPauseTime != null) {
+      final diffSecs = nowUtc.difference(currentPauseTime.toUtc()).inSeconds;
+      if (diffSecs > 0) {
+        newPausedDuration += Duration(seconds: diffSecs);
       }
-
-      int addedSecs = 0;
-      if (effectivePauseTime != null) {
-        final diffSecs =
-            nowUtc.difference(effectivePauseTime.toUtc()).inSeconds;
-        if (diffSecs > 0) {
-          addedSecs = diffSecs;
-        }
-      }
-
-      updatePayload['total_paused_seconds'] = existingPausedSecs + addedSecs;
-      // تصفير وقت الإيقاف المؤقت بعد استئناف العمل
-      updatePayload['pause_time'] = null;
     }
 
     // إرسال التحديث لسوبابيز واسترجاع الجلسة المحدثة
@@ -184,13 +146,30 @@ class SupabaseRemoteDataSource {
         .from('sessions')
         .update(updatePayload)
         .eq('id', id)
-        .select('*, customers(name)')
+        .select('*, customers(full_name)')
         .single();
     final map = Map<String, dynamic>.from(data);
     if (map['customers'] != null) {
-      map['customer_name'] = map['customers']['name'];
+      map['customer_name'] = map['customers']['full_name'];
     }
-    return SessionModel.fromJson(map);
+    final model = SessionModel.fromJson(map);
+    return SessionModel(
+      id: model.id,
+      customerId: model.customerId,
+      customerName: model.customerName,
+      startTime: model.startTime,
+      endTime: model.endTime,
+      pauseTime: isPausing ? nowUtc : null,
+      totalPausedDuration: newPausedDuration,
+      deskId: model.deskId,
+      deskLabel: model.deskLabel,
+      ratePerMinute: model.ratePerMinute,
+      totalAmount: model.totalAmount,
+      paidAmount: model.paidAmount,
+      paymentMethod: model.paymentMethod,
+      status: model.status,
+      notes: model.notes,
+    );
   }
 
   // إغلاق الجلسة (اسم بديل لـ endSession للتوافق)
@@ -220,25 +199,25 @@ class SupabaseRemoteDataSource {
     final data = await _client
         .from('sessions')
         .update({
-          'status': 'closed',
-          'end_time': nowUtc,
+          'status': 'completed',
+          'check_out_at': nowUtc,
           'total_amount': totalAmount,
-          'paid_amount': totalAmount,
-          'payment_method': paymentMethod,
           'updated_at': nowUtc,
         })
         .eq('id', id)
-        .select('*, customers(name)')
+        .select('*, customers(full_name)')
         .single();
 
-    // 2. تسجيل معاملة إيراد في جدول financial_transactions بكامل المبلغ المسدد
+    // 2. تسجيل معاملة إيراد في جدول transactions بكامل المبلغ المسدد
     if (totalAmount > 0) {
       try {
-        await _client.from('financial_transactions').insert({
-          'type': 'session',
+        await _client.from('transactions').insert({
+          'session_id': id,
+          'direction': 'in',
+          'purpose': 'session',
           'amount': totalAmount,
-          'payment_method': paymentMethod,
-          'description': 'تحصيل جلسة عمل',
+          'method': paymentMethod,
+          'note': 'تحصيل جلسة عمل',
           'created_at': nowUtc,
         });
       } catch (e) {
@@ -249,7 +228,7 @@ class SupabaseRemoteDataSource {
     // تجهيز الكائن النهائي وإرجاعه
     final map = Map<String, dynamic>.from(data);
     if (map['customers'] != null) {
-      map['customer_name'] = map['customers']['name'];
+      map['customer_name'] = map['customers']['full_name'];
     }
     return SessionModel.fromJson(map);
   }
@@ -259,16 +238,16 @@ class SupabaseRemoteDataSource {
   // ════════════════════════════════════════════════════════════════════════════
 
   // جلب جميع حجوزات أعياد الميلاد مرتبة بتواريخ الفعاليات
-  Future<List<BirthdayBookingModel>> getBirthdayBookings() async {
+  Future<List<BirthdayBooking>> getBirthdayBookings() async {
     final data = await _client
-        .from('birthday_bookings')
+        .from('event_bookings')
         .select()
-        .order('event_date', ascending: true);
-    return (data as List).map((e) => BirthdayBookingModel.fromJson(e)).toList();
+        .order('start_at', ascending: true);
+    return (data as List).map((e) => BirthdayBooking.fromJson(e)).toList();
   }
 
   // جلب حجوزات أعياد الميلاد القادمة (ابتداءً من اليوم فصاعداً)
-  Future<List<BirthdayBookingModel>> getUpcomingBirthdays() async {
+  Future<List<BirthdayBooking>> getUpcomingBirthdays() async {
     final today = DateTime.now();
     final startOfDay = DateTime(
       today.year,
@@ -276,23 +255,23 @@ class SupabaseRemoteDataSource {
       today.day,
     ).toIso8601String();
     final data = await _client
-        .from('birthday_bookings')
+        .from('event_bookings')
         .select()
-        .gte('event_date', startOfDay)
-        .order('event_date', ascending: true);
-    return (data as List).map((e) => BirthdayBookingModel.fromJson(e)).toList();
+        .gte('start_at', startOfDay)
+        .order('start_at', ascending: true);
+    return (data as List).map((e) => BirthdayBooking.fromJson(e)).toList();
   }
 
   // إنشاء حجز عيد ميلاد جديد
-  Future<BirthdayBookingModel> createBirthdayBooking(
+  Future<BirthdayBooking> createBirthdayBooking(
     Map<String, dynamic> json,
   ) async {
     final data = await _client
-        .from('birthday_bookings')
+        .from('event_bookings')
         .insert(json)
         .select()
         .single();
-    return BirthdayBookingModel.fromJson(data);
+    return BirthdayBooking.fromJson(data);
   }
 
   // ════════════════════════════════════════════════════════════════════════════
@@ -310,15 +289,12 @@ class SupabaseRemoteDataSource {
 
     // تنفيذ استعلامات الداشبورد بالتوازي (Concurrent Parallel Queries) لتسريع التحميل
     final results = await Future.wait([
-      _client.from('sessions').select('id').neq('status', 'closed'),
+      _client.from('sessions').select('id').neq('status', 'completed'),
       _client
-          .from('financial_transactions')
-          .select('amount, payment_method, type')
+          .from('transactions')
+          .select('amount, method, direction')
           .gte('created_at', startOfDay),
-      _client
-          .from('birthday_bookings')
-          .select('id')
-          .gte('event_date', startOfDay),
+      _client.from('event_bookings').select('id').gte('start_at', startOfDay),
     ]);
 
     final activeSessionsResponse = results[0] as List;
@@ -334,9 +310,11 @@ class SupabaseRemoteDataSource {
     // تجميع الإيرادات واستثناء حركات السحب النقدي
     for (final t in todayTransactions) {
       final amount = (t['amount'] as num?)?.toDouble() ?? 0.0;
-      if (t['type'] != 'withdrawal') {
+      final direction = t['direction']?.toString();
+      if (direction != 'out') {
         totalRevenue += amount;
-        switch (t['payment_method']) {
+        final method = (t['method'] ?? t['payment_method'])?.toString();
+        switch (method) {
           case 'cash':
             cashCollected += amount;
             break;
@@ -375,9 +353,8 @@ class SupabaseRemoteDataSource {
       today.day,
     ).toIso8601String();
     final data = await _client
-        .from('financial_transactions')
+        .from('expenses')
         .select()
-        .eq('type', 'withdrawal')
         .gte('created_at', startOfDay)
         .order('created_at', ascending: false);
     return (data as List).map((e) => CashWithdrawalModel.fromJson(e)).toList();
@@ -390,15 +367,18 @@ class SupabaseRemoteDataSource {
     required String reason,
     DateTime? createdAt,
   }) async {
-    final timestamp = (createdAt ?? DateTime.now()).toIso8601String();
+    final now = createdAt ?? DateTime.now();
+    final timestamp = now.toIso8601String();
+    final spentAtDate =
+        '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
     final data = await _client
-        .from('financial_transactions')
+        .from('expenses')
         .insert({
-          'type': 'withdrawal',
-          'created_by': staffName,
-          'amount': amount,
+          'category': staffName,
           'description': reason,
-          'payment_method': 'cash',
+          'amount': amount,
+          'method': 'cash',
+          'spent_at': spentAtDate,
           'created_at': timestamp,
         })
         .select()
@@ -414,7 +394,7 @@ class SupabaseRemoteDataSource {
   Future<List<CafeProduct>> getCafeProducts() async {
     try {
       final data = await _client
-          .from('cafe_products')
+          .from('products')
           .select()
           .order('category')
           .order('name');
@@ -431,14 +411,54 @@ class SupabaseRemoteDataSource {
     } catch (e) {
       AppLogger.warning('Supabase getCafeProducts fallback to default menu', e);
       return const [
-        CafeProduct(id: 'prod-1', name: 'قهوة عربية / تركي', price: 20.0, category: 'مشروبات'),
-        CafeProduct(id: 'prod-2', name: 'شاي أحمر / أخضر', price: 15.0, category: 'مشروبات'),
-        CafeProduct(id: 'prod-3', name: 'كابتشينو', price: 35.0, category: 'مشروبات'),
-        CafeProduct(id: 'prod-4', name: 'لاتيه', price: 40.0, category: 'مشروبات'),
-        CafeProduct(id: 'prod-5', name: 'عصير برتقال فريش', price: 25.0, category: 'مشروبات'),
-        CafeProduct(id: 'prod-6', name: 'مياه معدنية', price: 10.0, category: 'مشروبات'),
-        CafeProduct(id: 'prod-7', name: 'ساندويتش جبنة', price: 30.0, category: 'مأكولات'),
-        CafeProduct(id: 'prod-8', name: 'كيك شوكولاتة', price: 25.0, category: 'مأكولات'),
+        CafeProduct(
+          id: 'prod-1',
+          name: 'قهوة عربية / تركي',
+          price: 20.0,
+          category: 'مشروبات',
+        ),
+        CafeProduct(
+          id: 'prod-2',
+          name: 'شاي أحمر / أخضر',
+          price: 15.0,
+          category: 'مشروبات',
+        ),
+        CafeProduct(
+          id: 'prod-3',
+          name: 'كابتشينو',
+          price: 35.0,
+          category: 'مشروبات',
+        ),
+        CafeProduct(
+          id: 'prod-4',
+          name: 'لاتيه',
+          price: 40.0,
+          category: 'مشروبات',
+        ),
+        CafeProduct(
+          id: 'prod-5',
+          name: 'عصير برتقال فريش',
+          price: 25.0,
+          category: 'مشروبات',
+        ),
+        CafeProduct(
+          id: 'prod-6',
+          name: 'مياه معدنية',
+          price: 10.0,
+          category: 'مشروبات',
+        ),
+        CafeProduct(
+          id: 'prod-7',
+          name: 'ساندويتش جبنة',
+          price: 30.0,
+          category: 'مأكولات',
+        ),
+        CafeProduct(
+          id: 'prod-8',
+          name: 'كيك شوكولاتة',
+          price: 25.0,
+          category: 'مأكولات',
+        ),
       ];
     }
   }

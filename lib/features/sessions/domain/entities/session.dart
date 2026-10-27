@@ -28,6 +28,9 @@ class Session extends Equatable {
   final SessionStatus status; // الحالة الحالية للسيشن
   final String? notes; // ملاحظات إضافية
 
+  // خاصية مساعدة لمعرفة هل الجلسة نشطة أم لا
+  bool get isActive => status == SessionStatus.active;
+
   const Session({
     required this.id,
     required this.customerId,
@@ -42,9 +45,10 @@ class Session extends Equatable {
     required this.totalAmount,
     required this.paidAmount,
     this.paymentMethod,
-    required this.status,
+    SessionStatus? status,
+    bool? isActive,
     this.notes,
-  });
+  }) : status = status ?? (isActive == false ? SessionStatus.closed : SessionStatus.active);
 
   // حساب الرصيد المتبقي (ما لم يُدفع بعد)
   double get balance => totalAmount - paidAmount;
@@ -112,8 +116,13 @@ class Session extends Equatable {
     double? paidAmount,
     String? paymentMethod,
     SessionStatus? status,
+    bool? isActive,
     String? notes,
   }) {
+    final resolvedStatus = status ??
+        (isActive != null
+            ? (isActive ? SessionStatus.active : SessionStatus.closed)
+            : this.status);
     return Session(
       id: id ?? this.id,
       customerId: customerId ?? this.customerId,
@@ -128,7 +137,7 @@ class Session extends Equatable {
       totalAmount: totalAmount ?? this.totalAmount,
       paidAmount: paidAmount ?? this.paidAmount,
       paymentMethod: paymentMethod ?? this.paymentMethod,
-      status: status ?? this.status,
+      status: resolvedStatus,
       notes: notes ?? this.notes,
     );
   }

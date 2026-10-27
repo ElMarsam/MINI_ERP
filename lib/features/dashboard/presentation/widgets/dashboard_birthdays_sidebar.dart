@@ -1,6 +1,9 @@
-import 'package:erp_mini/core/constants/app_colors.dart';
-import 'package:erp_mini/core/constants/app_text_style.dart';
+import 'package:coworking_erp/core/constants/app_colors.dart';
+import 'package:coworking_erp/core/constants/app_text_style.dart';
+import 'package:coworking_erp/features/dashboard/domain/entities/birthday_booking.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 // ==============================================================================
 // ويدجت الشريط الجانبي لتذكير أعياد الميلاد (DashboardBirthdaysSidebar)
@@ -102,6 +105,85 @@ class DashboardBirthdaysSidebar extends StatelessWidget {
                 return BirthdayReminderCard(booking: upcomingBirthdays[i]);
               },
             ),
+        ],
+      ),
+    );
+  }
+}
+
+// بطاقة تذكير حجز عيد الميلاد
+class BirthdayReminderCard extends StatelessWidget {
+  final BirthdayBooking booking;
+
+  const BirthdayReminderCard({super.key, required this.booking});
+
+  @override
+  Widget build(BuildContext context) {
+    String formattedDate;
+    try {
+      final dateFormat = DateFormat('MM/dd', 'ar');
+      formattedDate = dateFormat.format(booking.eventDate);
+    } catch (_) {
+      formattedDate =
+          '${booking.eventDate.month.toString().padLeft(2, '0')}/${booking.eventDate.day.toString().padLeft(2, '0')}';
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.divider.withValues(alpha: 0.5)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  booking.customerName,
+                  style: AppTextStyles.labelMd.copyWith(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 11,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Text(
+                formattedDate,
+                style: AppTextStyles.labelSm.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 10,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              if (booking.packageType != null) ...[
+                Text(
+                  booking.packageType!,
+                  style: AppTextStyles.bodySm.copyWith(
+                    color: AppColors.textSecondary,
+                    fontSize: 9,
+                  ),
+                ),
+                const SizedBox(width: 6),
+              ],
+              Text(
+                '${booking.guestsCount} أفراد',
+                style: AppTextStyles.bodySm.copyWith(
+                  color: AppColors.textMuted,
+                  fontSize: 9,
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );

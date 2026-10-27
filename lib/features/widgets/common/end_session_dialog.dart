@@ -1,13 +1,12 @@
+import 'package:coworking_erp/core/constants/app_colors.dart';
+import 'package:coworking_erp/core/constants/app_constants.dart';
+import 'package:coworking_erp/core/constants/app_text_style.dart';
+import 'package:coworking_erp/core/utils/app_clock.dart';
+import 'package:coworking_erp/features/sessions/domain/entities/session.dart';
+import 'package:coworking_erp/features/widgets/common/select_cafe_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:coworking_erp/core/constants/app_constants.dart';
-import 'package:coworking_erp/core/theme/app_colors.dart';
-import 'package:coworking_erp/core/theme/app_text_styles.dart';
-import 'package:coworking_erp/core/utils/app_clock.dart';
-import 'package:coworking_erp/domain/entities/session.dart';
-import 'package:coworking_erp/domain/entities/cafe.dart';
-import 'select_cafe_dialog.dart';
 
 // ==============================================================================
 // ويدجت نافذة إنهاء الجلسة وحساب الفاتورة (EndSessionDialog)
@@ -24,7 +23,8 @@ class EndSessionDialog extends StatefulWidget {
     required double totalAmount,
     required double paidAmount,
     required String paymentMethod,
-  }) onConfirmEnd;
+  })
+  onConfirmEnd;
 
   const EndSessionDialog({
     super.key,
@@ -41,15 +41,14 @@ class EndSessionDialog extends StatefulWidget {
       required double totalAmount,
       required double paidAmount,
       required String paymentMethod,
-    }) onConfirmEnd,
+    })
+    onConfirmEnd,
   }) {
     return showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => EndSessionDialog(
-        session: session,
-        onConfirmEnd: onConfirmEnd,
-      ),
+      builder: (_) =>
+          EndSessionDialog(session: session, onConfirmEnd: onConfirmEnd),
     );
   }
 
@@ -97,7 +96,10 @@ class _EndSessionDialogState extends State<EndSessionDialog> {
   // إعادة احتساب إجمالي الفاتورة ديناميكياً مع أي تعديل
   void _recalculate() {
     setState(() {
-      _totalAmount = (_sessionCost + _extraCharges + _fees - _discount).clamp(0.0, double.infinity);
+      _totalAmount = (_sessionCost + _extraCharges + _fees - _discount).clamp(
+        0.0,
+        double.infinity,
+      );
     });
   }
 
@@ -159,8 +161,10 @@ class _EndSessionDialogState extends State<EndSessionDialog> {
       timeStart = DateFormat('hh:mm a', 'ar').format(cairoStartTime);
       timeEnd = DateFormat('hh:mm a', 'ar').format(cairoNow);
     } catch (_) {
-      timeStart = '${cairoStartTime.hour.toString().padLeft(2, '0')}:${cairoStartTime.minute.toString().padLeft(2, '0')}';
-      timeEnd = '${cairoNow.hour.toString().padLeft(2, '0')}:${cairoNow.minute.toString().padLeft(2, '0')}';
+      timeStart =
+          '${cairoStartTime.hour.toString().padLeft(2, '0')}:${cairoStartTime.minute.toString().padLeft(2, '0')}';
+      timeEnd =
+          '${cairoNow.hour.toString().padLeft(2, '0')}:${cairoNow.minute.toString().padLeft(2, '0')}';
     }
 
     return Directionality(
@@ -185,24 +189,37 @@ class _EndSessionDialogState extends State<EndSessionDialog> {
                       color: AppColors.primaryVariant,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(LucideIcons.receiptText, size: 20, color: Colors.white),
+                    child: const Icon(
+                      LucideIcons.receiptText,
+                      size: 20,
+                      color: Colors.white,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('إنهاء الجلسة وحساب الفاتورة', style: AppTextStyles.headlineMd),
+                        Text(
+                          'إنهاء الجلسة وحساب الفاتورة',
+                          style: AppTextStyles.headlineMd,
+                        ),
                         Text(
                           'مراجعة التكلفة الإجمالية وطريقة التحصيل المالي',
-                          style: AppTextStyles.bodySm.copyWith(color: AppColors.textMuted),
+                          style: AppTextStyles.bodySm.copyWith(
+                            color: AppColors.textMuted,
+                          ),
                         ),
                       ],
                     ),
                   ),
                   IconButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(LucideIcons.x, size: 20, color: AppColors.textMuted),
+                    icon: const Icon(
+                      LucideIcons.x,
+                      size: 20,
+                      color: AppColors.textMuted,
+                    ),
                   ),
                 ],
               ),
@@ -224,13 +241,25 @@ class _EndSessionDialogState extends State<EndSessionDialog> {
                       children: [
                         Row(
                           children: [
-                            const Icon(LucideIcons.user, size: 15, color: AppColors.secondary),
+                            const Icon(
+                              LucideIcons.user,
+                              size: 15,
+                              color: AppColors.secondary,
+                            ),
                             const SizedBox(width: 6),
-                            Text(session.customerName, style: AppTextStyles.headlineSm.copyWith(fontSize: 15)),
+                            Text(
+                              session.customerName,
+                              style: AppTextStyles.headlineSm.copyWith(
+                                fontSize: 15,
+                              ),
+                            ),
                           ],
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.surface,
                             borderRadius: BorderRadius.circular(4),
@@ -238,7 +267,9 @@ class _EndSessionDialogState extends State<EndSessionDialog> {
                           ),
                           child: Text(
                             session.deskLabel ?? 'مكتب فردي',
-                            style: AppTextStyles.labelMd.copyWith(color: AppColors.textPrimary),
+                            style: AppTextStyles.labelMd.copyWith(
+                              color: AppColors.textPrimary,
+                            ),
                           ),
                         ),
                       ],
@@ -251,7 +282,10 @@ class _EndSessionDialogState extends State<EndSessionDialog> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('فترة الجلسة:', style: AppTextStyles.labelMd),
-                        Text('من $timeStart إلى $timeEnd', style: AppTextStyles.bodySm),
+                        Text(
+                          'من $timeStart إلى $timeEnd',
+                          style: AppTextStyles.bodySm,
+                        ),
                       ],
                     ),
                     const SizedBox(height: 4),
@@ -259,7 +293,10 @@ class _EndSessionDialogState extends State<EndSessionDialog> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('صافي الوقت المستغرق:', style: AppTextStyles.labelMd),
+                        Text(
+                          'صافي الوقت المستغرق:',
+                          style: AppTextStyles.labelMd,
+                        ),
                         Text(
                           timeFormatted,
                           style: AppTextStyles.headlineSm.copyWith(
@@ -274,7 +311,10 @@ class _EndSessionDialogState extends State<EndSessionDialog> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('تكلفة الوقت المحسوبة:', style: AppTextStyles.labelMd),
+                        Text(
+                          'تكلفة الوقت المحسوبة:',
+                          style: AppTextStyles.labelMd,
+                        ),
                         Text(
                           '${_sessionCost.toStringAsFixed(1)} ج.م',
                           style: AppTextStyles.headlineSm.copyWith(
@@ -293,7 +333,9 @@ class _EndSessionDialogState extends State<EndSessionDialog> {
                         decoration: BoxDecoration(
                           color: AppColors.surface,
                           borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: AppColors.dividerInteractive),
+                          border: Border.all(
+                            color: AppColors.dividerInteractive,
+                          ),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -303,7 +345,11 @@ class _EndSessionDialogState extends State<EndSessionDialog> {
                               children: [
                                 Row(
                                   children: [
-                                    const Icon(LucideIcons.coffee, size: 13, color: AppColors.secondary),
+                                    const Icon(
+                                      LucideIcons.coffee,
+                                      size: 13,
+                                      color: AppColors.secondary,
+                                    ),
                                     const SizedBox(width: 5),
                                     Text(
                                       'طلبات البوفيه المضافة (${_selectedCafeItems.values.fold(0, (sum, i) => sum + i.quantity)} صنف):',
@@ -330,31 +376,41 @@ class _EndSessionDialogState extends State<EndSessionDialog> {
                               constraints: const BoxConstraints(maxHeight: 110),
                               child: SingleChildScrollView(
                                 child: Column(
-                                  children: _selectedCafeItems.values.map(
-                                    (item) => Padding(
-                                      padding: const EdgeInsets.symmetric(vertical: 2),
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Text(
-                                            '• ${item.productName} × ${item.quantity}',
-                                            style: AppTextStyles.bodySm.copyWith(
-                                              color: AppColors.textPrimary,
-                                              fontSize: 12,
-                                            ),
+                                  children: _selectedCafeItems.values
+                                      .map(
+                                        (item) => Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 2,
                                           ),
-                                          Text(
-                                            '${item.total.toStringAsFixed(1)} ج.م',
-                                            style: AppTextStyles.bodySm.copyWith(
-                                              color: AppColors.textMuted,
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: 12,
-                                            ),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text(
+                                                '• ${item.productName} × ${item.quantity}',
+                                                style: AppTextStyles.bodySm
+                                                    .copyWith(
+                                                      color:
+                                                          AppColors.textPrimary,
+                                                      fontSize: 12,
+                                                    ),
+                                              ),
+                                              Text(
+                                                '${item.total.toStringAsFixed(1)} ج.م',
+                                                style: AppTextStyles.bodySm
+                                                    .copyWith(
+                                                      color:
+                                                          AppColors.textMuted,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      fontSize: 12,
+                                                    ),
+                                              ),
+                                            ],
                                           ),
-                                        ],
-                                      ),
-                                    ),
-                                  ).toList(),
+                                        ),
+                                      )
+                                      .toList(),
                                 ),
                               ),
                             ),
@@ -366,7 +422,10 @@ class _EndSessionDialogState extends State<EndSessionDialog> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('طلبات كافيه / إضافات:', style: AppTextStyles.labelMd),
+                          Text(
+                            'طلبات كافيه / إضافات:',
+                            style: AppTextStyles.labelMd,
+                          ),
                           Text(
                             '+${_extraCharges.toStringAsFixed(1)} ج.م',
                             style: AppTextStyles.bodySm.copyWith(
@@ -424,7 +483,10 @@ class _EndSessionDialogState extends State<EndSessionDialog> {
                       onTap: _openCafeMenuSelector,
                       borderRadius: BorderRadius.circular(6),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
                           color: _selectedCafeItems.isNotEmpty
                               ? AppColors.secondary.withValues(alpha: 0.08)
@@ -505,7 +567,9 @@ class _EndSessionDialogState extends State<EndSessionDialog> {
                     flex: 3,
                     child: TextField(
                       controller: _feesController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                       decoration: const InputDecoration(
                         labelText: 'رسوم إضافية (ج.م)',
                         hintText: '0',
@@ -524,7 +588,9 @@ class _EndSessionDialogState extends State<EndSessionDialog> {
                     flex: 3,
                     child: TextField(
                       controller: _discountController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                       decoration: const InputDecoration(
                         labelText: 'خصم / تخفيض (ج.م)',
                         hintText: '0',
@@ -576,7 +642,10 @@ class _EndSessionDialogState extends State<EndSessionDialog> {
 
               // ─── شريط الإجمالي المطلوب والمبلغ المسدد ───
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.surfaceVariant,
                   borderRadius: BorderRadius.circular(8),
@@ -588,7 +657,10 @@ class _EndSessionDialogState extends State<EndSessionDialog> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('إجمالي الفاتورة المطلوب سدادها', style: AppTextStyles.labelMd),
+                        Text(
+                          'إجمالي الفاتورة المطلوب سدادها',
+                          style: AppTextStyles.labelMd,
+                        ),
                         const SizedBox(height: 4),
                         Text(
                           '${_totalAmount.toStringAsFixed(1)} ج.م',
@@ -600,7 +672,10 @@ class _EndSessionDialogState extends State<EndSessionDialog> {
                       ],
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.statusActiveBg,
                         borderRadius: BorderRadius.circular(6),
@@ -609,7 +684,11 @@ class _EndSessionDialogState extends State<EndSessionDialog> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(LucideIcons.checkCheck, size: 16, color: AppColors.statusActive),
+                          const Icon(
+                            LucideIcons.checkCheck,
+                            size: 16,
+                            color: AppColors.statusActive,
+                          ),
                           const SizedBox(width: 8),
                           Text(
                             'سداد كامل الفاتورة',
@@ -632,8 +711,15 @@ class _EndSessionDialogState extends State<EndSessionDialog> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton(
-                    onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
-                    child: Text('إلغاء', style: AppTextStyles.labelLg.copyWith(color: AppColors.textMuted)),
+                    onPressed: _isSubmitting
+                        ? null
+                        : () => Navigator.of(context).pop(),
+                    child: Text(
+                      'إلغاء',
+                      style: AppTextStyles.labelLg.copyWith(
+                        color: AppColors.textMuted,
+                      ),
+                    ),
                   ),
                   const SizedBox(width: 10),
                   ElevatedButton.icon(
@@ -642,18 +728,34 @@ class _EndSessionDialogState extends State<EndSessionDialog> {
                         ? const SizedBox(
                             width: 16,
                             height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
                           )
-                        : const Icon(LucideIcons.checkCheck, size: 16, color: Colors.white),
+                        : const Icon(
+                            LucideIcons.checkCheck,
+                            size: 16,
+                            color: Colors.white,
+                          ),
                     label: Text(
-                      _isSubmitting ? 'جاري الحفظ...' : 'تأكيد الدفع وإنهاء السيشن',
-                      style: AppTextStyles.labelLg.copyWith(color: Colors.white),
+                      _isSubmitting
+                          ? 'جاري الحفظ...'
+                          : 'تأكيد الدفع وإنهاء السيشن',
+                      style: AppTextStyles.labelLg.copyWith(
+                        color: Colors.white,
+                      ),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
+                      ),
                     ),
                   ),
                 ],
@@ -697,7 +799,9 @@ class _EndSessionDialogState extends State<EndSessionDialog> {
             Text(
               label,
               style: AppTextStyles.labelSm.copyWith(
-                color: isSelected ? AppColors.onSecondaryContainer : AppColors.textPrimary,
+                color: isSelected
+                    ? AppColors.onSecondaryContainer
+                    : AppColors.textPrimary,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
               ),
             ),

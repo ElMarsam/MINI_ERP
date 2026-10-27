@@ -32,19 +32,18 @@ class SessionRepositoryImpl implements SessionRepository {
   }) async {
     final sessionData = {
       'customer_id': customerId,
-      'start_time': DateTime.now().toUtc().toIso8601String(),
+      'check_in_at': DateTime.now().toUtc().toIso8601String(),
       'status': 'active',
       'total_amount': 0.0,
-      'paid_amount': 0.0,
-      'desk_id': deskId,
-      'desk_label': deskLabel,
+      'space_id': deskId,
       'rate_per_minute': ratePerMinute ?? 0.50,
+      if (deskLabel != null && deskLabel.isNotEmpty) 'notes': deskLabel,
     };
     final session = await _remoteDataSource.createSession(sessionData);
-    if (session.customerName.isEmpty && customerName.isNotEmpty) {
-      return session.copyWith(customerName: customerName);
-    }
-    return session;
+    return session.copyWith(
+      customerName: session.customerName.isNotEmpty ? session.customerName : customerName,
+      deskLabel: deskLabel ?? session.deskLabel,
+    );
   }
 
   @override

@@ -21,7 +21,8 @@ class SessionModel extends Session {
     required super.totalAmount,
     required super.paidAmount,
     super.paymentMethod,
-    required super.status,
+    super.status,
+    super.isActive,
     super.notes,
   });
 
@@ -35,11 +36,15 @@ class SessionModel extends Session {
       // استخراج اسم العميل، وإعطاء قيمة افتراضية نص فارغ لو كان null
       customerName: json['customer_name'] as String? ?? '',
       // تحويل وقت البدء من نص ISO8601 إلى DateTime
-      startTime: DateTime.parse(json['start_time'] as String),
+      startTime: DateTime.parse(
+        (json['check_in_at'] ?? json['start_time'] ?? DateTime.now().toIso8601String()) as String,
+      ),
       // تحويل وقت الانتهاء إذا كان متوفراً
-      endTime: json['end_time'] != null
-          ? DateTime.parse(json['end_time'] as String)
-          : null,
+      endTime: json['check_out_at'] != null
+          ? DateTime.parse(json['check_out_at'] as String)
+          : (json['end_time'] != null
+                ? DateTime.parse(json['end_time'] as String)
+                : null),
       // تحويل وقت الإيقاف المؤقت إذا كان متوفراً
       pauseTime: json['pause_time'] != null
           ? DateTime.parse(json['pause_time'] as String)
@@ -52,8 +57,8 @@ class SessionModel extends Session {
         ),
       ),
       // استخراج بيانات المكتب المخصص
-      deskId: json['desk_id'] as String?,
-      deskLabel: json['desk_label'] as String?,
+      deskId: (json['space_id'] ?? json['desk_id']) as String?,
+      deskLabel: (json['space_label'] ?? json['desk_label'] ?? json['notes']) as String?,
       // استخراج تسعيرة الدقيقة كرقم عشري
       ratePerMinute: (json['rate_per_minute'] as num?)?.toDouble(),
       // استخراج المبالغ المالية مع ضمان عدم إرجاع null
@@ -61,11 +66,13 @@ class SessionModel extends Session {
       paidAmount: (json['paid_amount'] as num?)?.toDouble() ?? 0.0,
       // طريقة الدفع
       paymentMethod: json['payment_method'] as String?,
-      // مطابقة نص الحالة بقيم الـ Enum، والرجوع لقيمة active كخيار افتراضي
-      status: SessionStatus.values.firstWhere(
-        (e) => e.name == (json['status'] as String? ?? 'active'),
-        orElse: () => SessionStatus.active,
-      ),
+      // مطابقة نص الحالة بقيم الـ Enum مع دعم completed من الداتابيز
+      status: () {
+        final st = json['status']?.toString();
+        if (st == 'completed' || st == 'closed') return SessionStatus.closed;
+        if (st == 'paused') return SessionStatus.paused;
+        return SessionStatus.active;
+      }(),
       // الملاحظات
       notes: json['notes'] as String?,
     );
@@ -77,19 +84,13 @@ class SessionModel extends Session {
       'id': id,
       'customer_id': customerId,
       // تحويل أوقات DateTime إلى صيغة ISO8601 القياسية
-      'start_time': startTime.toIso8601String(),
-      'end_time': endTime?.toIso8601String(),
-      'pause_time': pauseTime?.toIso8601String(),
-      // تخزين مدة الإيقاف المؤقت بالثواني
-      'total_paused_seconds': totalPausedDuration.inSeconds,
-      'desk_id': deskId,
-      'desk_label': deskLabel,
+      'check_in_at': startTime.toIso8601String(),
+      'check_out_at': endTime?.toIso8601String(),
+      if (deskId != null) 'space_id': deskId,
       'rate_per_minute': ratePerMinute,
       'total_amount': totalAmount,
-      'paid_amount': paidAmount,
-      'payment_method': paymentMethod,
-      // تخزين اسم حالة الـ Enum كنص
-      'status': status.name,
+      // تخزين اسم حالة الـ Enum كنص متوافق مع session_status في Supabase
+      'status': status == SessionStatus.closed ? 'completed' : 'active',
       'notes': notes,
     };
   }
