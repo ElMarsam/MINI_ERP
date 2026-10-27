@@ -26,111 +26,116 @@ class ReportPdfBuilder {
       author: 'ERP',
     );
 
+    // ─── الصفحة الأولى: نظرة عامة والملخص ──────────────────────────────────
     doc.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
         textDirection: pw.TextDirection.rtl,
         margin: const pw.EdgeInsets.all(32),
         build: (context) => [
-          _header(data, texts),
-          pw.SizedBox(height: 18),
-          _twoColumns(
-            _table(
-              title: 'البوفيه',
-              headers: const ['الصنف', 'الكمية', 'الإيراد'],
-              flex: const [3, 1, 1],
-              rows: [
-                for (final i in data.buffetItems)
-                  [i.name, formatNumber(i.quantity), formatNumber(i.revenue)],
-              ],
-              totalRow: [
-                'الإجمالي',
-                formatNumber(data.buffetItemsCount),
-                formatNumber(data.buffetRevenue),
-              ],
-            ),
-            _table(
-              title: 'السيشنات',
-              headers: const ['المؤشر', 'القيمة'],
-              flex: const [3, 2],
-              rows: [
-                ['عدد السيشنات', formatNumber(data.sessionsCount)],
-                ['إجمالي الدقائق', formatNumber(data.sessionsMinutes)],
-                ['متوسط مدة السيشن', '${data.avgSessionMinutes} دقيقة'],
-                ['متوسط قيمة السيشن', '${data.avgSessionValue} ج.م'],
-              ],
-            ),
+          _header(texts),
+          pw.SizedBox(height: 20),
+          _totalBox(
+            label: texts.totalLabel,
+            note: texts.totalNote,
+            value: data.hasExpenses ? data.netProfit : data.totalCollected,
           ),
-          pw.SizedBox(height: 18),
+          pw.SizedBox(height: 20),
           _table(
-            title: 'أعياد الميلاد والحجوزات',
-            headers: const [
-              'العميل',
-              'موعد الحفل',
-              'الإجمالي',
-              'العربون',
-              'المتبقي',
-              'الحالة',
-            ],
-            flex: const [3, 3, 2, 2, 2, 2],
-            highlightColumn: 4,
+            title: 'ملخص المؤشرات العامة',
+            headers: const ['المؤشر الرئيسي', 'القيمة الإجمالية'],
+            flex: const [3, 2],
             rows: [
-              for (final e in data.events)
-                [
-                  e.customerName,
-                  formatDayMonth(e.eventDate),
-                  formatNumber(e.total),
-                  formatNumber(e.deposit),
-                  formatNumber(e.remaining),
-                  e.status,
-                ],
+              ['إجمالي إيرادات السيشنات', '${formatNumber(data.sessionsRevenue)} ج.م (${data.sessionsCount} سيشن)'],
+              ['إجمالي مبيعات البوفيه', '${formatNumber(data.buffetRevenue)} ج.م (${data.buffetItemsCount} صنف)'],
+              ['إجمالي مقبوضات الفعاليات', '${formatNumber(data.eventsRevenue)} ج.م (${data.eventsBookingsCount} حفل)'],
+              ['إجمالي المتحصلات النقدية', '${formatNumber(data.totalCollected)} ج.م'],
+            ],
+          ),
+        ],
+        footer: (context) => _footer(context),
+      ),
+    );
+
+    // ─── الصفحة الثانية: تقرير السيشنات والبوفيه ────────────────────────────
+    doc.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        textDirection: pw.TextDirection.rtl,
+        margin: const pw.EdgeInsets.all(32),
+        build: (context) => [
+          _sectionTitle('ثانياً: تقرير السيشنات ومساحات العمل'),
+          pw.SizedBox(height: 10),
+          _table(
+            title: 'تفاصيل السيشنات',
+            headers: const ['المؤشر', 'القيمة'],
+            flex: const [3, 2],
+            rows: [
+              ['عدد السيشنات الكلي', formatNumber(data.sessionsCount)],
+              ['إجمالي عدد الدقائق', '${formatNumber(data.sessionsMinutes)} دقيقة'],
+              ['متوسط مدة السيشن', '${data.avgSessionMinutes} دقيقة'],
+              ['متوسط قيمة السيشن', '${formatNumber(data.avgSessionValue)} ج.م'],
+            ],
+          ),
+          pw.SizedBox(height: 20),
+          _sectionTitle('ثالثاً: تقرير البوفيه والمشروبات والمأكولات'),
+          pw.SizedBox(height: 10),
+          _table(
+            title: 'تفاصيل مبيعات الأصناف',
+            headers: const ['الصنف', 'الكمية المباعة', 'الإيراد المحقق'],
+            flex: const [3, 1, 1],
+            rows: [
+              for (final i in data.buffetItems)
+                [i.name, formatNumber(i.quantity), '${formatNumber(i.revenue)} ج.م'],
             ],
             totalRow: [
               'الإجمالي',
-              '',
-              formatNumber(data.eventsTotal),
-              formatNumber(data.eventsDeposits),
-              formatNumber(data.eventsRemaining),
-              '',
+              formatNumber(data.buffetItemsCount),
+              '${formatNumber(data.buffetRevenue)} ج.م',
             ],
-          ),
-          pw.SizedBox(height: 18),
-          _paymentMethodsTable(data),
-          pw.SizedBox(height: 18),
-          _twoColumns(
-            _totalBox(
-              label: texts.totalLabel,
-              note: texts.totalNote,
-              value: data.hasExpenses ? data.netProfit : data.totalCollected,
-            ),
-            data.hasExpenses
-                ? _table(
-              title: 'المصروفات وصافي الربح',
-              headers: const ['البند', 'المبلغ'],
-              flex: const [3, 2],
-              rows: [
-                for (final x in data.expenses!)
-                  [x.name, formatNumber(x.amount)],
-              ],
-              totalRow: [
-                'إجمالي المصروفات',
-                formatNumber(data.totalExpenses),
-              ],
-              footerRow: ['صافي الربح', formatNumber(data.netProfit)],
-            )
-                : null,
           ),
         ],
-        footer: (context) => pw.Container(
-          padding: const pw.EdgeInsets.only(top: 8),
-          child: pw.Row(
-            mainAxisAlignment: pw.MainAxisAlignment.end,
-            children: [
-              _t('صفحة ${context.pageNumber} من ${context.pagesCount}',
-                  size: 8, color: _muted),
+        footer: (context) => _footer(context),
+      ),
+    );
+
+    // ─── الصفحة الثالثة: تقرير الحجوزات وطرق الدفع ─────────────────────────
+    doc.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        textDirection: pw.TextDirection.rtl,
+        margin: const pw.EdgeInsets.all(32),
+        build: (context) => [
+          _sectionTitle('رابعاً: تقرير أعياد الميلاد وحجوزات القاعات'),
+          pw.SizedBox(height: 10),
+          _table(
+            title: 'قائمة الحجوزات المؤكدة',
+            headers: const ['موعد الحفل', 'المتبقي', 'الإجمالي', 'العربون', 'العميل'],
+            flex: const [3, 2, 2, 2, 3],
+            rows: [
+              for (final e in data.events)
+                [
+                  formatDayMonth(e.eventDate),
+                  '${formatNumber(e.remaining)} ج.م',
+                  '${formatNumber(e.total)} ج.م',
+                  '${formatNumber(e.deposit)} ج.م',
+                  e.customerName,
+                ],
+            ],
+            totalRow: [
+              '',
+              '${formatNumber(data.eventsRemaining)} ج.م',
+              '${formatNumber(data.eventsTotal)} ج.م',
+              '${formatNumber(data.eventsDeposits)} ج.م',
+              'الإجمالي',
             ],
           ),
-        ),
+          pw.SizedBox(height: 20),
+          _sectionTitle('خامساً: تقرير وسائل الدفع والتحصيل'),
+          pw.SizedBox(height: 10),
+          _paymentMethodsTable(data),
+        ],
+        footer: (context) => _footer(context),
       ),
     );
 
@@ -153,7 +158,18 @@ class ReportPdfBuilder {
     );
   }
 
-  static pw.Widget _header(ReportData data, _PdfTexts texts) {
+  static pw.Widget _sectionTitle(String title) {
+    return pw.Text(
+      title,
+      style: pw.TextStyle(
+        fontSize: 14,
+        fontWeight: pw.FontWeight.bold,
+        color: _accent,
+      ),
+    );
+  }
+
+  static pw.Widget _header(_PdfTexts texts) {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.stretch,
       children: [
@@ -192,6 +208,19 @@ class ReportPdfBuilder {
     );
   }
 
+  static pw.Widget _footer(pw.Context context) {
+    return pw.Container(
+      padding: const pw.EdgeInsets.only(top: 8),
+      child: pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.end,
+        children: [
+          _t('صفحة ${context.pageNumber} من ${context.pagesCount}',
+              size: 8, color: _muted),
+        ],
+      ),
+    );
+  }
+
   static pw.Widget _paymentMethodsTable(ReportData data) {
     final total = data.totalCollected;
     final cash = data.paid(PaymentMethod.cash);
@@ -199,7 +228,7 @@ class ReportPdfBuilder {
     final vodafoneCash = data.paid(PaymentMethod.vodafoneCash);
 
     return _table(
-      title: 'بيانات أنواع الدفع (طرق السداد)',
+      title: 'توزيع طرق السداد',
       headers: const ['طريقة السداد', 'المبلغ المحصل', 'النسبة'],
       flex: const [3, 2, 2],
       rows: [
@@ -223,20 +252,6 @@ class ReportPdfBuilder {
         'الإجمالي',
         '${formatNumber(total)} ج.م',
         '100%'
-      ],
-    );
-  }
-
-  static pw.Widget _twoColumns(pw.Widget? left, pw.Widget? right) {
-    if (left == null && right == null) return pw.SizedBox.shrink();
-    if (left == null) return right!;
-    if (right == null) return left;
-    return pw.Row(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
-        pw.Expanded(child: left),
-        pw.SizedBox(width: 14),
-        pw.Expanded(child: right),
       ],
     );
   }

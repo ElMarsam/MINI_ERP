@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:printing/printing.dart';
-import 'package:erp_mini/core/network/supabase_client.dart';
 import '../../domain/entities/report_data.dart';
 import '../pdf/report_pdf_builder.dart';
 
@@ -13,20 +12,8 @@ class ReportsPage extends StatefulWidget {
 
 class _ReportsPageState extends State<ReportsPage> {
   final ReportPeriod _period = ReportPeriod.daily;
-  late final Future<ReportData> _reportDataFuture = _fetchReportData();
 
-  Future<ReportData> _fetchReportData() async {
-    try {
-      // Trying to fetch from Supabase table 'transactions'
-      final response = await SupabaseService.client.from('transactions').select();
-      if (response.isNotEmpty) {
-        // If data exists in Supabase, parse it (or use parsed data)
-      }
-    } catch (_) {
-      // Fallback gracefully to mock data if table doesn't exist yet or offline
-    }
-    return _getMockData(_period);
-  }
+  ReportData get _data => _getMockData(_period);
 
   Future<void> _exportPdf(ReportData data) async {
     final pdfBytes = await ReportPdfBuilder.build(data);
@@ -38,52 +25,50 @@ class _ReportsPageState extends State<ReportsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final data = _data;
+
     return Scaffold(
       backgroundColor: ReportPalette.background,
-      body: FutureBuilder<ReportData>(
-        future: _reportDataFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          final data = snapshot.data ?? _getMockData(_period);
-
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1200),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1200),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                ReportsHeader(onExportPdf: () => _exportPdf(data)),
+                const SizedBox(height: 16),
+                SummaryCards(data: data),
+                const SizedBox(height: 16),
+                ResponsiveReportGrid(
+                  wideColumns: 2,
                   children: [
-                    ReportsHeader(onExportPdf: () => _exportPdf(data)),
-                    const SizedBox(height: 16),
-                    SummaryCards(data: data),
-                    const SizedBox(height: 16),
-                    ResponsiveReportGrid(
-                      wideColumns: 2,
-                      children: [
-                        RevenueSourcesCard(data: data),
-                        PaymentMethodsCard(data: data),
-                      ],
-                    ),
-                    if (data.hasExpenses) ...[
-                      const SizedBox(height: 16),
-                      ExpensesCard(data: data),
-                    ],
-                    const SizedBox(height: 16),
-                    TransactionsLedger(
-                      transactions: data.transactions,
-                      totalCount: data.transactionsTotalCount,
-                    ),
+                    RevenueSourcesCard(data: data),
+                    PaymentMethodsCard(data: data),
                   ],
                 ),
-              ),
+                if (data.hasExpenses) ...[
+                  const SizedBox(height: 16),
+                  ExpensesCard(data: data),
+                ],
+                const SizedBox(height: 16),
+                TransactionsLedger(
+                  transactions: data.transactions,
+                  totalCount: data.transactionsTotalCount,
+                ),
+              ],
             ),
-          );
-        },
+          ),
+        ),
       ),
     );
+  }
+
+  /// عداد تلقائي برقم مسلسل يتزايد كل يوم بناءً على تقويم السنة
+  String _generateDailyReportNumber(DateTime date) {
+    final dayOfYear = date.difference(DateTime(date.year, 1, 1)).inDays + 1;
+    return 'NH-${date.year}-$dayOfYear';
   }
 
   ReportData _getMockData(ReportPeriod period) {
@@ -92,66 +77,148 @@ class _ReportsPageState extends State<ReportsPage> {
       period: ReportPeriod.daily,
       from: now,
       to: now,
-      reportNumber: 'REP-2026-0301',
-      sessionsRevenue: 4200,
-      sessionsCount: 35,
-      sessionsMinutes: 2100,
+      reportNumber: _generateDailyReportNumber(now),
+      sessionsRevenue: 6850,
+      sessionsCount: 48,
+      sessionsMinutes: 3420,
       buffetItems: const [
-        BuffetItem(name: 'قهوة تركي', quantity: 45, revenue: 1350),
-        BuffetItem(name: 'لاتيه', quantity: 20, revenue: 1000),
-        BuffetItem(name: 'مياه معدنية', quantity: 60, revenue: 600),
-        BuffetItem(name: 'عصير فريش', quantity: 15, revenue: 750),
+        BuffetItem(name: 'قهوة تركي مظبوط', quantity: 68, revenue: 2040),
+        BuffetItem(name: 'لاتيه كراميل', quantity: 34, revenue: 1700),
+        BuffetItem(name: 'مياه معدنية (كبير)', quantity: 95, revenue: 950),
+        BuffetItem(name: 'عصير مانجو فريش', quantity: 28, revenue: 1400),
+        BuffetItem(name: 'شاي كشري أصلي', quantity: 45, revenue: 675),
+        BuffetItem(name: 'تشيز كيك لوتس', quantity: 19, revenue: 950),
       ],
       events: [
         EventBooking(
-          customerName: 'أحمد محمد',
-          eventDate: DateTime(2026, 3, 1),
-          total: 5000,
-          deposit: 2000,
+          customerName: 'مهندس كريم ممدوح',
+          eventDate: DateTime(2026, 3, 2),
+          total: 7500,
+          deposit: 3000,
+          status: 'مؤكد',
+        ),
+        EventBooking(
+          customerName: 'أستاذة نوران حسن',
+          eventDate: DateTime(2026, 3, 4),
+          total: 4500,
+          deposit: 1500,
           status: 'مؤكد',
         ),
       ],
       paymentsByMethod: const {
-        PaymentMethod.cash: 4500,
-        PaymentMethod.instaPay: 2500,
-        PaymentMethod.vodafoneCash: 1000,
+        PaymentMethod.cash: 7200,
+        PaymentMethod.instaPay: 4100,
+        PaymentMethod.vodafoneCash: 2475,
       },
-      changePercent: 12.5,
+      changePercent: 14.2,
       transactions: [
         ReportTransaction(
-          dateTime: now.subtract(const Duration(hours: 4)),
-          receiptNumber: 'REC-901',
-          customerName: 'محمود حسن',
-          customerTag: 'VIP',
-          itemLabel: 'سيشن عمل (3 ساعات)',
+          dateTime: now.subtract(const Duration(hours: 7)),
+          receiptNumber: 'REC-301',
+          customerName: 'إسلام الشناوي',
+          customerTag: 'مشترك',
+          itemLabel: 'قعدة فردي + شاي',
           type: RevenueType.session,
-          amount: 300,
+          amount: 140,
           method: PaymentMethod.cash,
-          employeeName: 'سارة',
+          employeeName: 'عمرو',
         ),
         ReportTransaction(
-          dateTime: now.subtract(const Duration(hours: 3, minutes: 30)),
-          receiptNumber: 'REC-902',
-          customerName: 'إسلام علي',
-          itemLabel: '2 قهوة تركي + 1 لاتيه',
-          type: RevenueType.buffet,
-          amount: 150,
+          dateTime: now.subtract(const Duration(hours: 6, minutes: 40)),
+          receiptNumber: 'REC-302',
+          customerName: 'بسملة خالد',
+          itemLabel: 'مكتب هادئ (4 ساعات)',
+          type: RevenueType.session,
+          amount: 250,
           method: PaymentMethod.instaPay,
-          employeeName: 'محمد',
+          employeeName: 'مريم',
         ),
         ReportTransaction(
-          dateTime: now.subtract(const Duration(hours: 2)),
-          receiptNumber: 'REC-903',
-          customerName: 'أحمد محمد',
+          dateTime: now.subtract(const Duration(hours: 5, minutes: 15)),
+          receiptNumber: 'REC-303',
+          customerName: 'دكتور وليد عبد الله',
+          customerTag: 'VIP',
+          itemLabel: '2 قهوة تركي + تشيز كيك',
+          type: RevenueType.buffet,
+          amount: 280,
+          method: PaymentMethod.cash,
+          employeeName: 'عمرو',
+        ),
+        ReportTransaction(
+          dateTime: now.subtract(const Duration(hours: 4, minutes: 30)),
+          receiptNumber: 'REC-304',
+          customerName: 'مهندس كريم ممدوح',
+          customerTag: 'حفل',
+          itemLabel: 'عربون حفلة تخرج (قاعة أ)',
+          type: RevenueType.event,
+          amount: 3000,
+          method: PaymentMethod.vodafoneCash,
+          employeeName: 'سلمى',
+        ),
+        ReportTransaction(
+          dateTime: now.subtract(const Duration(hours: 3, minutes: 50)),
+          receiptNumber: 'REC-305',
+          customerName: 'يوسف رامي',
+          itemLabel: 'مساحة عمل مفتوحة',
+          type: RevenueType.session,
+          amount: 180,
+          method: PaymentMethod.cash,
+          employeeName: 'مريم',
+        ),
+        ReportTransaction(
+          dateTime: now.subtract(const Duration(hours: 3, minutes: 10)),
+          receiptNumber: 'REC-306',
+          customerName: 'آية مرسي',
+          itemLabel: 'لاتيه كراميل + مياه',
+          type: RevenueType.buffet,
+          amount: 110,
+          method: PaymentMethod.instaPay,
+          employeeName: 'عمرو',
+        ),
+        ReportTransaction(
+          dateTime: now.subtract(const Duration(hours: 2, minutes: 20)),
+          receiptNumber: 'REC-307',
+          customerName: 'فريق تيم وورك',
+          customerTag: 'مجموعة',
+          itemLabel: 'حجز قاعة اجتماعات صغيرة (ساعتين)',
+          type: RevenueType.session,
+          amount: 600,
+          method: PaymentMethod.cash,
+          employeeName: 'سلمى',
+        ),
+        ReportTransaction(
+          dateTime: now.subtract(const Duration(hours: 1, minutes: 45)),
+          receiptNumber: 'REC-308',
+          customerName: 'أستاذة نوران حسن',
           customerTag: 'حفل',
           itemLabel: 'عربون عيد ميلاد',
           type: RevenueType.event,
-          amount: 2000,
+          amount: 1500,
           method: PaymentMethod.vodafoneCash,
-          employeeName: 'سارة',
+          employeeName: 'مريم',
+        ),
+        ReportTransaction(
+          dateTime: now.subtract(const Duration(hours: 1, minutes: 10)),
+          receiptNumber: 'REC-309',
+          customerName: 'محمود الصفتي',
+          itemLabel: 'عصير مانجو فريش',
+          type: RevenueType.buffet,
+          amount: 50,
+          method: PaymentMethod.cash,
+          employeeName: 'عمرو',
+        ),
+        ReportTransaction(
+          dateTime: now.subtract(const Duration(minutes: 45)),
+          receiptNumber: 'REC-310',
+          customerName: 'رنا حسام',
+          itemLabel: 'قعدة فردي + قهوة',
+          type: RevenueType.session,
+          amount: 160,
+          method: PaymentMethod.instaPay,
+          employeeName: 'سلمى',
         ),
       ],
-      transactionsTotalCount: 45,
+      transactionsTotalCount: 84,
     );
   }
 }
@@ -244,7 +311,7 @@ class SummaryCards extends StatelessWidget {
   String _changeText(ReportData d) {
     final sign = d.changePercent >= 0 ? '+' : '-';
     final percent = d.changePercent.abs().toStringAsFixed(1);
-    return '$sign$percent% مقارنة بالأمس';
+    return '$sign$percent% عن أمس';
   }
 }
 
@@ -822,6 +889,19 @@ class _TransactionsLedgerState extends State<TransactionsLedger> {
   }
 
   Widget _buildDataRow(ReportTransaction t) {
+    return DataRowBuilder(t: t, flex: _flex);
+  }
+}
+
+class DataRowBuilder extends StatelessWidget {
+  const DataRowBuilder({super.key, required this.t, required this.flex});
+  final ReportTransaction t;
+  final List<int> flex;
+
+  Widget _cell(int index, Widget child) => Expanded(flex: flex[index], child: child);
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: const BoxDecoration(
@@ -898,7 +978,7 @@ class _SmallChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
       decoration: BoxDecoration(
         color: ReportPalette.surface,
         borderRadius: BorderRadius.circular(10),
