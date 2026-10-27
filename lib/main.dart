@@ -13,6 +13,14 @@ void main() async {
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJqdWRndHR6emxjbXNxeHJvanBsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI4MzU3ODQsImV4cCI6MjEwODQxMTc4NH0.gOdONl_rqVEMj36Fqzep83qLNWTUYFTC5nMnKkMeKR8',
   );
 
+  // اختبار الاتصال بـ Supabase وطباعة النتيجة في الـ Debug Console
+  try {
+    final res = await Supabase.instance.client.from('transactions').select().limit(1);
+    debugPrint('🟢 Supabase Connected Successfully! Response: $res');
+  } catch (e) {
+    debugPrint('🟡 Supabase Connection Note: $e');
+  }
+
   runApp(const ErpApp());
 }
 

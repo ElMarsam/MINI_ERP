@@ -23,7 +23,7 @@ class ReportPdfBuilder {
     final doc = pw.Document(
       theme: pw.ThemeData.withFont(base: regular, bold: bold),
       title: texts.subtitle,
-      author: 'NileHub',
+      author: 'ERP',
     );
 
     doc.addPage(
@@ -95,6 +95,8 @@ class ReportPdfBuilder {
             ],
           ),
           pw.SizedBox(height: 18),
+          _paymentMethodsTable(data),
+          pw.SizedBox(height: 18),
           _twoColumns(
             _totalBox(
               label: texts.totalLabel,
@@ -118,29 +120,12 @@ class ReportPdfBuilder {
             )
                 : null,
           ),
-          pw.SizedBox(height: 30),
-          pw.Row(
-            mainAxisAlignment: pw.MainAxisAlignment.end,
-            children: [
-              pw.SizedBox(
-                width: 170,
-                child: pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.stretch,
-                  children: [
-                    pw.Divider(height: 12, thickness: 0.8, color: _ink),
-                    _t('توقيع المسؤول', size: 9, color: _muted),
-                  ],
-                ),
-              ),
-            ],
-          ),
         ],
         footer: (context) => pw.Container(
           padding: const pw.EdgeInsets.only(top: 8),
           child: pw.Row(
-            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: pw.MainAxisAlignment.end,
             children: [
-              _t(texts.footerNote, size: 8, color: _muted),
               _t('صفحة ${context.pageNumber} من ${context.pagesCount}',
                   size: 8, color: _muted),
             ],
@@ -179,8 +164,7 @@ class ReportPdfBuilder {
             pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                _t('NileHub Workspace', size: 12, bold: true, color: _accent),
-                pw.SizedBox(height: 2),
+                pw.SizedBox(height: 4),
                 _t(texts.subtitle, size: 18, bold: true),
                 pw.SizedBox(height: 2),
                 _t(texts.periodStr, size: 10, color: _muted),
@@ -196,10 +180,7 @@ class ReportPdfBuilder {
               child: pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.end,
                 children: [
-                  _t('رقم التقرير: ${data.reportNumber}', size: 9, bold: true),
-                  pw.SizedBox(height: 2),
-                  _t('تاريخ الاصدار: ${formatDate(DateTime.now())}',
-                      size: 8, color: _muted),
+                  _t('رقم التقرير: 0', size: 9, bold: true),
                 ],
               ),
             ),
@@ -207,6 +188,41 @@ class ReportPdfBuilder {
         ),
         pw.SizedBox(height: 12),
         pw.Divider(height: 1, color: _line),
+      ],
+    );
+  }
+
+  static pw.Widget _paymentMethodsTable(ReportData data) {
+    final total = data.totalCollected;
+    final cash = data.paid(PaymentMethod.cash);
+    final instaPay = data.paid(PaymentMethod.instaPay);
+    final vodafoneCash = data.paid(PaymentMethod.vodafoneCash);
+
+    return _table(
+      title: 'بيانات أنواع الدفع (طرق السداد)',
+      headers: const ['طريقة السداد', 'المبلغ المحصل', 'النسبة'],
+      flex: const [3, 2, 2],
+      rows: [
+        [
+          'كاش نقدي',
+          '${formatNumber(cash)} ج.م',
+          '${total == 0 ? 0.0 : (cash / total * 100).toStringAsFixed(1)}%'
+        ],
+        [
+          'InstaPay',
+          '${formatNumber(instaPay)} ج.م',
+          '${total == 0 ? 0.0 : (instaPay / total * 100).toStringAsFixed(1)}%'
+        ],
+        [
+          'فودافون كاش',
+          '${formatNumber(vodafoneCash)} ج.م',
+          '${total == 0 ? 0.0 : (vodafoneCash / total * 100).toStringAsFixed(1)}%'
+        ],
+      ],
+      totalRow: [
+        'الإجمالي',
+        '${formatNumber(total)} ج.م',
+        '100%'
       ],
     );
   }
@@ -350,14 +366,12 @@ class _PdfTexts {
     required this.periodStr,
     required this.totalLabel,
     required this.totalNote,
-    required this.footerNote,
   });
 
   final String subtitle;
   final String periodStr;
   final String totalLabel;
   final String totalNote;
-  final String footerNote;
 
   static _PdfTexts of(ReportData data) {
     return _PdfTexts(
@@ -365,7 +379,6 @@ class _PdfTexts {
       periodStr: 'عن يوم ${formatDate(data.from)}',
       totalLabel: 'إجمالي متحصلات اليوم',
       totalNote: 'شامل السيشنات، البوفيه، وعرابين الحفلات.',
-      footerNote: 'NileHub ERP • تقرير يومي معتمد',
     );
   }
 }
